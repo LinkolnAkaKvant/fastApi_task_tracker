@@ -2,10 +2,11 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from app.api import employees, tasks
 
-app = FastAPI()
+app = FastAPI(
+)
 
-app.include_router(employees.router, prefix="/employees", tags=["employees"])
-app.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+app.include_router(employees.employee_router, prefix="/employees", tags=["employees"])
+app.include_router(tasks.task_router, prefix="/tasks", tags=["tasks"])
 
 
 @app.exception_handler(HTTPException)

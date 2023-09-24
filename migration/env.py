@@ -2,6 +2,8 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
+from app.models.employees import Employee
+from app.models.tasks import Task
 
 from app.db.base import *
 from config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
@@ -10,12 +12,14 @@ from config import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
 # access to the values within the .ini file in use.
 config = context.config
 
-section = config.config_ini_section
-config.set_section_option(section, "DB_USER", DB_USER)
-config.set_section_option(section, "DB_PASSWORD", DB_PASSWORD)
-config.set_section_option(section, "DB_NAME", DB_NAME)
-config.set_section_option(section, "DB_HOST", DB_HOST)
-config.set_section_option(section, "DB_PORT", DB_PORT)
+connection_string = f"postgresql+psycopg2://postgres:postgres@localhost:5432/postgres"
+config.set_main_option("sqlalchemy.url", connection_string)
+# section = config.config_ini_section
+# config.set_section_option(section, "DB_USER", DB_USER)
+# config.set_section_option(section, "DB_PASSWORD", DB_PASSWORD)
+# config.set_section_option(section, "DB_NAME", DB_NAME)
+# config.set_section_option(section, "DB_HOST", DB_HOST)
+# config.set_section_option(section, "DB_PORT", DB_PORT)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

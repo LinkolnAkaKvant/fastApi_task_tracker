@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from contextlib import contextmanager
 
 from config import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 
@@ -12,9 +13,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def get_db():
-    db = SessionLocal()
+@contextmanager
+def get_session():
+    session = SessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()

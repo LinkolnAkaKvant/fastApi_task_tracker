@@ -1,27 +1,32 @@
-from datetime import date
+from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel
 
+from app.models.tasks import TaskStatus
+from app.schemas.employees import EmployeeBase
+
 
 class TaskBase(BaseModel):
     task_name: str
-    parent_task_id: Optional[int]
-    employee_id: Optional[int]
-    deadline: Optional[date]
-    status: Optional[str]
+    description: str
+    parent_task_id: int
+    employee_id: int
+    deadline: datetime
+    status: TaskStatus
+    employee: Optional[EmployeeBase]
 
 
 class TaskCreate(TaskBase):
-    pass
+    task_name: str
+    description: str
+    parent_task_id: int
+    employee_id: int
+    deadline: datetime
+    status: TaskStatus
 
 
-class TaskUpdate(TaskBase):
-    pass
-
-
-class Task(TaskBase):
-    id: int
-
-    class Config:
-        orm_mode = True
+class ImportantTask(BaseModel):
+    task_name: str
+    deadline: datetime
+    employee_full_name: Optional[str]

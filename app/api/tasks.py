@@ -1,45 +1,62 @@
-from typing import List
+from datetime import datetime
+from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
+from sqlalchemy.orm import joinedload
 
-from app.crud.tasks import get_task, get_tasks
-from app.db.base import get_db
-from app.schemas.tasks import Task, TaskCreate, TaskUpdate
+from app.db.base import get_session
+from app.models.tasks import Task, TaskStatus
+from app.schemas.tasks import TaskBase, TaskCreate
 
-router = APIRouter()
-
-
-@router.post("/", response_model=TaskCreate)
-def create_task(task: TaskCreate, db: Session = Depends(get_db)):
-    return create_task(db=db, task=task)
+task_router = APIRouter()
 
 
-@router.get("/{task_id}", response_model=Task)
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    db_task = get_task(db, task_id=task_id)
-    if db_task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return db_task
-
-
-@router.get("/", response_model=List[Task])
-def get_tasks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    tasks = get_tasks(db, skip=skip, limit=limit)
+@task_router.get("/tasks", response_model=List[TaskBase])
+def get_tasks():
+    with get_session() as session:
+        tasks = session.query(Task).options(joinedload(Task.employee)).all()
     return tasks
 
 
-@router.put("/{task_id}", response_model=TaskUpdate)
-def update_task(task_id: int, task: TaskCreate, db: Session = Depends(get_db)):
-    db_task = update_task(db=db, task_id=task_id, task=task)
-    if db_task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return db_task
+@task_router.get("/tasks/{task_id}", response_model=TaskBase)
+def get_task(task_id: int):
+    with get_session() as session:
+        task = session.query(Task).filter(Task.id == task_id).first()
+    return task
 
 
-@router.delete("/{task_id}", response_model=Task)
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    db_task = delete_task(db=db, task_id=task_id)
-    if db_task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return db_task
+@task_router.post("/tasks", response_model=TaskCreate)
+def create_task(task: TaskCreate):
+    with get_session() as session:
+        new_task = Task(**task.dict())
+        session.add(new_task)
+        session.commit()
+        session.refresh(new_task)
+    return new_task
+
+
+@task_router.put("/tasks/{task_id}")
+def update_task(task_id: int, description: Optional[str] = None, employee_id: Optional[int] = None,
+                deadline: Optional[datetime] = None, status: Optional[TaskStatus] = None):
+    with get_session() as session:
+        task = session.query(Task).filter(Task.id == task_id).first()
+        if description is not None:
+            task.description = description
+        if employee_id is not None:
+            task.employee_id = employee_id
+        if deadline is not None:
+            task.deadline = deadline
+        if status is not None:
+            task.status = status
+        session.commit()
+        session.refresh(task)
+    return {"message": "Task updated", "task": task}
+
+
+@task_router.delete("/tasks/{task_id}")
+def delete_task(task_id: int):
+    with get_session() as session:
+        task = session.query(Task).filter(Task.id == task_id).first()
+        session.delete(task)
+        session.commit()
+        return {"message": "Task deleted"}

@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import Optional, List
+
 from pydantic import BaseModel
 
 
@@ -6,16 +9,15 @@ class EmployeeBase(BaseModel):
     position: str
 
 
-class EmployeeCreate(EmployeeBase):
-    pass
+class TaskName(BaseModel):
+    task_name: str
 
 
-class EmployeeUpdate(EmployeeBase):
-    pass
+class Employees(EmployeeBase):
+    tasks: Optional[List[TaskName]]
 
 
-class Employee(EmployeeBase):
-    id: int
-
-    class Config:
-        orm_mode = True
+class ImportantTask(BaseModel):
+    task_name: str
+    deadline: datetime
+    employee_full_name: Optional[str]
